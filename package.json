@@ -1,6 +1,6 @@
 {
   "name": "capacitor-music-controls-plugin",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Implementation of MusicControls for Capacitor projects",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -18,8 +18,7 @@
   "devDependencies": {
     "typescript": "^3.2.4",
     "@capacitor/ios": "latest",
-    "@capacitor/android": "latest",
-    "rxjs": "5.5.10"
+    "@capacitor/android": "latest"
   },
   "files": [
     "dist/",

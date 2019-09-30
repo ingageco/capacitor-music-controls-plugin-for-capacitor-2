@@ -1,28 +1,28 @@
 
 import Foundation
 
-
  
-@objc(CapacitorMusicControlsInfo)
+
+//@objc(CapacitorMusicControlsInfo)
 public class CapacitorMusicControlsInfo: NSObject {
     
 
-    var artist: String?;
-    var track: String?;
-    var album: String?;
-    var ticker: String?;
-    var cover: String?;
-    var duration: Int?;
-    var elapsed: Int?;
-    var isPlaying: Bool?;
-    var hasPrev: Bool?;
-    var hasNext: Bool?;
-    var hasSkipForward: Bool?;
-    var hasSkipBackward: Bool?;
-    var hasScrubbing: Bool?;
-    var skipForwardInterval: NSNumber?;
-    var skipBackwardInterval: NSNumber?;
-    var dismissable: Bool?;
+    var artist: String? = "";
+    var track: String? = "";
+    var album: String? = "";
+    var ticker: String? = "";
+    var cover: String? = nil;
+    var duration: Int? = 0;
+    var elapsed: Int? = 0;
+    var isPlaying: Bool? = true;
+    var hasPrev: Bool? = true;
+    var hasNext: Bool? = true;
+    var hasSkipForward: Bool? = false;
+    var hasSkipBackward: Bool? = false;
+    var hasScrubbing: Bool? = false;
+    var skipForwardInterval: NSNumber? = 0;
+    var skipBackwardInterval: NSNumber? = 0;
+    var dismissable: Bool? = true;
     
     
     
@@ -48,6 +48,6 @@ public class CapacitorMusicControlsInfo: NSObject {
 
     }
     
-    
+ 
     
 }

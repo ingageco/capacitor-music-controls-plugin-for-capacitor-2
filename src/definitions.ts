@@ -1,9 +1,7 @@
-import { Observable } from 'rxjs/Observable';
 
 declare global {
   interface PluginRegistry {
-    CapacitorMusicControls: CapacitorMusicControlsPlugin;
-    CapacitorMusicControlsInfo: CapacitorMusicControlsInfo;
+    CapacitorMusicControls?: CapacitorMusicControls;
   }
 }
 
@@ -33,7 +31,7 @@ export interface CapacitorMusicControlsInfo {
   notificationIcon?: string;
 }
 
-export interface CapacitorMusicControlsPlugin {
+export interface CapacitorMusicControls {
   /**
      * Create the media controls
      * @param options {MusicControlsOptions}
@@ -49,11 +47,11 @@ export interface CapacitorMusicControlsPlugin {
      * Subscribe to the events of the media controller
      * @returns {Observable<any>}
      */
-    subscribe(): Observable<any>;
-    /**
-     * Start listening for events, this enables the Observable from the subscribe method
-     */
-    listen(): void;
+    // subscribe(): Observable<any>;
+    // /**
+    //  * Start listening for events, this enables the Observable from the subscribe method
+    //  */
+    // listen(): void;
     /**
      * Toggle play/pause:
      * @param isPlaying {boolean}
