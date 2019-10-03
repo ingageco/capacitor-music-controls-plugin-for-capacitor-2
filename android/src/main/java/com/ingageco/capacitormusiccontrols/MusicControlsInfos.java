@@ -1,5 +1,7 @@
 package com.ingageco.capacitormusiccontrols;
 
+import com.getcapacitor.JSObject;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,8 +24,8 @@ public class MusicControlsInfos{
 	public String closeIcon;
 	public String notificationIcon;
 
-	public MusicControlsInfos(JSONArray args) throws JSONException {
-		final JSONObject params = args.getJSONObject(0);
+	public MusicControlsInfos(JSObject args) throws JSONException {
+		final JSObject params = args;
 		
 		this.track = params.getString("track");
 		this.artist = params.getString("artist");

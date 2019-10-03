@@ -1,7 +1,7 @@
 package com.ingageco.capacitormusiccontrols;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
+
+import com.getcapacitor.JSObject;
 
 import android.util.Log;
 import android.app.Activity;
@@ -12,43 +12,48 @@ import android.content.BroadcastReceiver;
 import android.view.KeyEvent;
 
 public class MusicControlsBroadcastReceiver extends BroadcastReceiver {
-	private CallbackContext cb;
-	private MusicControls musicControls;
+
+	private CapacitorMusicControls musicControls;
 
 
-	public MusicControlsBroadcastReceiver(MusicControls musicControls){
+	public MusicControlsBroadcastReceiver(CapacitorMusicControls musicControls){
 		this.musicControls=musicControls;
 	}
 
-	public void setCallback(CallbackContext cb){
-		this.cb = cb;
-	}
 
 	public void stopListening(){
-		if (this.cb != null){
-			this.cb.success("{\"message\": \"music-controls-stop-listening\" }");
-			this.cb = null;
-		}
+
+		JSObject ret = new JSObject();
+		ret.put("message", "music-controls-stop-listening");
+
+		this.musicControls.controlsNotification(ret);
+
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
-		if (this.cb != null){
 			String message = intent.getAction();
+			JSObject ret = new JSObject();
 
-			if(message.equals(Intent.ACTION_HEADSET_PLUG)){
+
+		if(message.equals(Intent.ACTION_HEADSET_PLUG)){
 				// Headphone plug/unplug
 				int state = intent.getIntExtra("state", -1);
 				switch (state) {
 					case 0:
-						this.cb.success("{\"message\": \"music-controls-headset-unplugged\"}");
-						this.cb = null;
+
+						ret.put("message", "music-controls-headset-unplugged");
+
+						this.musicControls.controlsNotification(ret);
+
 						this.musicControls.unregisterMediaButtonEvent();
 						break;
 					case 1:
-						this.cb.success("{\"message\": \"music-controls-headset-plugged\"}");
-						this.cb = null;
+
+
+						ret.put("message", "music-controls-headset-plugged");
+
 						this.musicControls.registerMediaButtonEvent();
 						break;
 					default:
@@ -62,80 +67,121 @@ public class MusicControlsBroadcastReceiver extends BroadcastReceiver {
 					int keyCode = event.getKeyCode();
 					switch (keyCode) {
 						case KeyEvent.KEYCODE_MEDIA_NEXT:
-							this.cb.success("{\"message\": \"music-controls-media-button-next\"}");
+							ret.put("message", "music-controls-media-button-next");
+							this.musicControls.controlsNotification(ret);
 							break;
 						case KeyEvent.KEYCODE_MEDIA_PAUSE:
-							this.cb.success("{\"message\": \"music-controls-media-button-pause\"}");
+							ret.put("message", "music-controls-media-button-pause");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-pause\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_PLAY:
-							this.cb.success("{\"message\": \"music-controls-media-button-play\"}");
+							ret.put("message", "music-controls-media-button-play");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-play\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-							this.cb.success("{\"message\": \"music-controls-media-button-play-pause\"}");
+							ret.put("message", "music-controls-media-button-play-pause");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-play-pause\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-							this.cb.success("{\"message\": \"music-controls-media-button-previous\"}");
+							ret.put("message", "music-controls-media-button-previous");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-previous\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_STOP:
-							this.cb.success("{\"message\": \"music-controls-media-button-stop\"}");
+							ret.put("message", "music-controls-media-button-stop");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-stop\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-							this.cb.success("{\"message\": \"music-controls-media-button-fast-forward\"}");
+							ret.put("message", "music-controls-media-button-fast-forward");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-fast-forward\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_REWIND:
-							this.cb.success("{\"message\": \"music-controls-media-button-rewind\"}");
+							ret.put("message", "music-controls-media-button-rewind");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-rewind\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
-							this.cb.success("{\"message\": \"music-controls-media-button-skip-backward\"}");
+							ret.put("message", "music-controls-media-button-skip-backward");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-skip-backward\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
-							this.cb.success("{\"message\": \"music-controls-media-button-skip-forward\"}");
+							ret.put("message", "music-controls-media-button-skip-forward");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-skip-forward\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD:
-							this.cb.success("{\"message\": \"music-controls-media-button-step-backward\"}");
+							ret.put("message", "music-controls-media-button-step-backward");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-step-backward\"}");
 							break;
 						case KeyEvent.KEYCODE_MEDIA_STEP_FORWARD:
-							this.cb.success("{\"message\": \"music-controls-media-button-step-forward\"}");
+							ret.put("message", "music-controls-media-button-step-forward");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-step-forward\"}");
 							break;
 						case KeyEvent.KEYCODE_META_LEFT:
-							this.cb.success("{\"message\": \"music-controls-media-button-meta-left\"}");
+							ret.put("message", "music-controls-media-button-meta-left");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-meta-left\"}");
 							break;
 						case KeyEvent.KEYCODE_META_RIGHT:
-							this.cb.success("{\"message\": \"music-controls-media-button-meta-right\"}");
+							ret.put("message", "music-controls-media-button-meta-right");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-meta-right\"}");
 							break;
 						case KeyEvent.KEYCODE_MUSIC:
-							this.cb.success("{\"message\": \"music-controls-media-button-music\"}");
+							ret.put("message", "music-controls-media-button-music");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-music\"}");
 							break;
 						case KeyEvent.KEYCODE_VOLUME_UP:
-							this.cb.success("{\"message\": \"music-controls-media-button-volume-up\"}");
+							ret.put("message", "music-controls-media-button-volume-up");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-volume-up\"}");
 							break;
 						case KeyEvent.KEYCODE_VOLUME_DOWN:
-							this.cb.success("{\"message\": \"music-controls-media-button-volume-down\"}");
+							ret.put("message", "music-controls-media-button-volume-down");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-volume-down\"}");
 							break;
 						case KeyEvent.KEYCODE_VOLUME_MUTE:
-							this.cb.success("{\"message\": \"music-controls-media-button-volume-mute\"}");
+							ret.put("message", "music-controls-media-button-volume-mute");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-volume-mute\"}");
 							break;
 						case KeyEvent.KEYCODE_HEADSETHOOK:
-							this.cb.success("{\"message\": \"music-controls-media-button-headset-hook\"}");
+							ret.put("message", "music-controls-media-button-headset-hook");
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"music-controls-media-button-headset-hook\"}");
 							break;
 						default:
-							this.cb.success("{\"message\": \"" + message + "\"}");
+							ret.put("message", message);
+							this.musicControls.controlsNotification(ret);
+							//this.cb.success("{\"message\": \"" + message + "\"}");
 							break;
 					}
-					this.cb = null;
 				}
 			} else if (message.equals("music-controls-destroy")){
 				// Close Button
-				this.cb.success("{\"message\": \"music-controls-destroy\"}");
-				this.cb = null;
+			ret.put("message", "music-controls-destroy");
+
+			this.musicControls.controlsNotification(ret);
+//				this.cb.success("{\"message\": \"music-controls-destroy\"}");
+//				this.cb = null;
 				this.musicControls.destroyPlayerNotification();
 			} else {
-				this.cb.success("{\"message\": \"" + message + "\"}");
-				this.cb = null;
+			ret.put("message", message);
+			this.musicControls.controlsNotification(ret);
+//				this.cb.success("{\"message\": \"" + message + "\"}");
+//				this.cb = null;
 			}
 
-
-		}
 
 	}
 }

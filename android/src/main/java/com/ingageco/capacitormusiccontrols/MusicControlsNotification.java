@@ -1,8 +1,5 @@
 package com.ingageco.capacitormusiccontrols;
 
-import org.apache.cordova.CordovaInterface;
-
-
 import java.lang.ref.WeakReference;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -16,6 +13,7 @@ import android.util.Log;
 import android.R;
 import android.content.Context;
 import android.app.Activity;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -43,7 +41,7 @@ public class MusicControlsNotification {
 
 	// Public Constructor
 	public MusicControlsNotification(Activity cordovaActivity,int id){
-		this.CHANNEL_ID ="cordova-music-channel-id";
+		this.CHANNEL_ID ="capacitor-music-channel-id";
 		this.notificationID = id;
 		this.cordovaActivity = cordovaActivity;
 		Context context = cordovaActivity;
@@ -52,9 +50,9 @@ public class MusicControlsNotification {
 		// use channelid for Oreo and higher
 		if (Build.VERSION.SDK_INT >= 26) {
 			// The user-visible name of the channel.
-			CharSequence name = "cordova-music-controls-plugin";
+			CharSequence name = "capacitor-music-controls-plugin";
 			// The user-visible description of the channel.
-			String description = "cordova-music-controls-plugin notification";
+			String description = "capacitor-music-controls-plugin notification";
 
 			int importance = NotificationManager.IMPORTANCE_LOW;
 

@@ -16,6 +16,8 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 import android.util.Log;
 import android.app.Activity;
+
+
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.Intent;
@@ -30,6 +32,9 @@ import android.R;
 import android.content.BroadcastReceiver;
 import android.media.AudioManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,9 +45,7 @@ import java.net.URL;
 @NativePlugin()
 public class CapacitorMusicControls extends Plugin {
 
-    private static final String TAG = "CapacitorMusicControls";
-
-    private static final String TAG = "MusicControls";
+	private static final String TAG = "CapacitorMusicControls";
 
 	private MusicControlsBroadcastReceiver mMessageReceiver;
 	private MusicControlsNotification notification;
@@ -53,12 +56,166 @@ public class CapacitorMusicControls extends Plugin {
 	private boolean mediaButtonAccess=true;
 	private ServiceConnection mConnection;
 
-  	private Activity capacitorActivity;
+	private Activity cordovaActivity;
 
-	private MediaSessionCallback mMediaSessionCallback = new MediaSessionCallback();
+	private MediaSessionCallback mMediaSessionCallback;
 
-    private void registerBroadcaster(MusicControlsBroadcastReceiver mMessageReceiver){
-		final Context context = getContext();
+
+
+
+	@PluginMethod()
+    public void create(PluginCall call) {
+        JSObject options = call.getData();
+
+
+		final Context context=getActivity().getApplicationContext();
+		final Activity activity = getActivity();
+
+        this.initialize();
+
+
+		try{
+			final MusicControlsInfos infos = new MusicControlsInfos(options);
+
+			final MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
+
+
+			notification.updateNotification(infos);
+
+			// track title
+			metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, infos.track);
+			// artists
+			metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, infos.artist);
+			//album
+			metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, infos.album);
+
+			Bitmap art = getBitmapCover(infos.cover);
+			if(art != null){
+				metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, art);
+				metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, art);
+
+			}
+
+			mediaSessionCompat.setMetadata(metadataBuilder.build());
+
+			if(infos.isPlaying)
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+			else
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+
+			call.success();
+
+		}catch(JSONException e){
+			call.reject("error in initializing MusicControlsInfos");
+
+		}
+
+
+
+
+    }
+
+	@PluginMethod()
+	public void updateIsPlaying(PluginCall call) {
+		JSObject params = call.getData();
+
+		// final JSONObject params = args.getJSONObject(0);
+		try{
+			final boolean isPlaying = params.getBoolean("isPlaying");
+			this.notification.updateIsPlaying(isPlaying);
+
+			if(isPlaying)
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+			else
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+
+			call.success();
+		} catch(JSONException e){
+			call.reject("error in updateIsPlaying");
+		}
+
+
+
+	}
+
+	@PluginMethod()
+	public void updateElapsed(PluginCall call) {
+		JSObject params = call.getData();
+
+		// final JSONObject params = args.getJSONObject(0);
+		try{
+			final boolean isPlaying = params.getBoolean("isPlaying");
+			this.notification.updateIsPlaying(isPlaying);
+
+			if(isPlaying)
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+			else
+				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+
+			call.success();
+		} catch(JSONException e){
+			call.reject("error in updateElapsed");
+		}
+
+	}
+
+	@PluginMethod()
+	public void updateDismissable(PluginCall call) {
+		JSObject params = call.getData();
+		// final JSONObject params = args.getJSONObject(0);
+		try{
+			final boolean dismissable = params.getBoolean("dismissable");
+			this.notification.updateDismissable(dismissable);
+		call.success();
+		} catch(JSONException e){
+			call.reject("error in updateDismissable");
+		}
+
+	}
+
+	@PluginMethod()
+	public void updateIsPlayingDismissable(PluginCall call) {
+		JSObject params = call.getData();
+
+		try{
+
+			final boolean dismissable_2 = params.getBoolean("dismissable");
+			final boolean isPlaying_2 = params.getBoolean("isPlaying");
+			this.notification.updateIsPlayingDismissable(isPlaying_2, dismissable_2);
+			call.success();
+		} catch(JSONException e){
+			call.reject("error in updateIsPlayingDismissable");
+		}
+
+
+	}
+
+
+
+	@PluginMethod()
+	public void destroy(PluginCall call) {
+		this.notification.destroy();
+		this.mMessageReceiver.stopListening();
+		this.unregisterMediaButtonEvent();
+		if (mConnection != null) {
+			final Activity activity = getActivity();
+			Intent stopServiceIntent = new Intent(activity, CMCNotifyKiller.class);
+			activity.unbindService(mConnection);
+			activity.stopService(stopServiceIntent);
+		}
+		call.success();
+	}
+
+
+	public void controlsNotification(JSObject ret){
+
+        notifyListeners("controlsNotification", ret);
+
+    }
+
+
+	private void registerBroadcaster(MusicControlsBroadcastReceiver mMessageReceiver){
+		final Context context = getActivity().getApplicationContext();
 		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-previous"));
 		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-pause"));
 		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-play"));
@@ -91,13 +248,134 @@ public class CapacitorMusicControls extends Plugin {
 		this.notification.destroy();
 	}
 
+	public void initialize() {
 
-    @PluginMethod()
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
+		this.cordovaActivity = getActivity();
 
-        JSObject ret = new JSObject();
-        ret.put("value", value);
-        call.success(ret);
-    }
+        final Activity activity=getActivity();
+
+        final Context context=getActivity().getApplicationContext();
+
+		this.notification = new MusicControlsNotification(activity,this.notificationID);
+		final MusicControlsNotification my_notification = this.notification;
+		this.mMessageReceiver = new MusicControlsBroadcastReceiver(this);
+		this.registerBroadcaster(mMessageReceiver);
+
+
+		this.mediaSessionCompat = new MediaSessionCompat(context, "cordova-music-controls-media-session", null, this.mediaButtonPendingIntent);
+		this.mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+
+		setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+		this.mediaSessionCompat.setActive(true);
+
+		this.mMediaSessionCallback = new MediaSessionCallback(this);
+
+		this.mediaSessionCompat.setCallback(this.mMediaSessionCallback);
+
+		// Register media (headset) button event receiver
+		try {
+			this.mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
+			Intent headsetIntent = new Intent("music-controls-media-button");
+			this.mediaButtonPendingIntent = PendingIntent.getBroadcast(context, 0, headsetIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			this.registerMediaButtonEvent();
+		} catch (Exception e) {
+			this.mediaButtonAccess=false;
+			e.printStackTrace();
+		}
+
+		final Activity pa = activity;
+
+		// Notification Killer
+		mConnection = new ServiceConnection() {
+			public void onServiceConnected(ComponentName className, IBinder binder) {
+				Log.i(TAG, "onServiceConnected");
+				final CMCNotifyKiller service = (CMCNotifyKiller) ((KillBinder) binder).service;
+				my_notification.setKillerService(service);
+				service.startService(new Intent(pa, CMCNotifyKiller.class));
+				Log.i(TAG, "service Started");
+			}
+			public void onServiceDisconnected(ComponentName className) {
+			}
+		};
+		Intent startServiceIntent = new Intent(activity,CMCNotifyKiller.class);
+		startServiceIntent.putExtra("notificationID",this.notificationID);
+		activity.bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+	}
+
+
+
+
+	private void setMediaPlaybackState(int state) {
+		PlaybackStateCompat.Builder playbackstateBuilder = new PlaybackStateCompat.Builder();
+		if( state == PlaybackStateCompat.STATE_PLAYING ) {
+			playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+					PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID |
+					PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH);
+			playbackstateBuilder.setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f);
+		} else {
+			playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+					PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID |
+					PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH);
+			playbackstateBuilder.setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 0);
+		}
+		this.mediaSessionCompat.setPlaybackState(playbackstateBuilder.build());
+	}
+
+	// Get image from url
+	private Bitmap getBitmapCover(String coverURL){
+		try{
+			if(coverURL.matches("^(https?|ftp)://.*$"))
+				// Remote image
+				return getBitmapFromURL(coverURL);
+			else {
+				// Local image
+				return getBitmapFromLocal(coverURL);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
+	// get Local image
+	private Bitmap getBitmapFromLocal(String localURL){
+		try {
+			Uri uri = Uri.parse(localURL);
+			File file = new File(uri.getPath());
+			FileInputStream fileStream = new FileInputStream(file);
+			BufferedInputStream buf = new BufferedInputStream(fileStream);
+			Bitmap myBitmap = BitmapFactory.decodeStream(buf);
+			buf.close();
+			return myBitmap;
+		} catch (Exception ex) {
+			try {
+				InputStream fileStream = cordovaActivity.getAssets().open("www/" + localURL);
+				BufferedInputStream buf = new BufferedInputStream(fileStream);
+				Bitmap myBitmap = BitmapFactory.decodeStream(buf);
+				buf.close();
+				return myBitmap;
+			} catch (Exception ex2) {
+				ex.printStackTrace();
+				ex2.printStackTrace();
+				return null;
+			}
+		}
+	}
+
+	// get Remote image
+	private Bitmap getBitmapFromURL(String strURL) {
+		try {
+			URL url = new URL(strURL);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setDoInput(true);
+			connection.connect();
+			InputStream input = connection.getInputStream();
+			Bitmap myBitmap = BitmapFactory.decodeStream(input);
+			return myBitmap;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
 }
