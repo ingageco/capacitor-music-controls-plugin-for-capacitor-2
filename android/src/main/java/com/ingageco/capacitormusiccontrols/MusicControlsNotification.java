@@ -44,7 +44,7 @@ public class MusicControlsNotification {
 		this.CHANNEL_ID ="capacitor-music-channel-id";
 		this.notificationID = id;
 		this.cordovaActivity = cordovaActivity;
-		Context context = cordovaActivity;
+		Context context = cordovaActivity.getApplicationContext();
 		this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
 		// use channelid for Oreo and higher
@@ -181,7 +181,7 @@ public class MusicControlsNotification {
 	}
 
 	private void createBuilder(){
-		Context context = cordovaActivity;
+		Context context = cordovaActivity.getApplicationContext();
 		Notification.Builder builder = new Notification.Builder(context);
 
 		// use channelid for Oreo and higher

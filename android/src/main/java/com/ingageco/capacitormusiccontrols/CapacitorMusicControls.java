@@ -131,6 +131,10 @@ public class CapacitorMusicControls extends Plugin {
 
 			call.success();
 		} catch(JSONException e){
+			System.out.println("toString(): "  + e.toString());
+			System.out.println("getMessage(): " + e.getMessage());
+			System.out.println("StackTrace: ");
+			e.printStackTrace();
 			call.reject("error in updateIsPlaying");
 		}
 
