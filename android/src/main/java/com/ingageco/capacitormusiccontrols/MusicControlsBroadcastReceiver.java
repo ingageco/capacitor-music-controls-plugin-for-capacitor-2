@@ -13,6 +13,9 @@ import android.view.KeyEvent;
 
 public class MusicControlsBroadcastReceiver extends BroadcastReceiver {
 
+	private static final String TAG = "CMCBroadRcvr";
+
+
 	private CapacitorMusicControls musicControls;
 
 
@@ -33,8 +36,11 @@ public class MusicControlsBroadcastReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
-			String message = intent.getAction();
-			JSObject ret = new JSObject();
+		String message = intent.getAction();
+		JSObject ret = new JSObject();
+
+		Log.i(TAG, "onReceive fired "  + message);
+
 
 
 		if(message.equals(Intent.ACTION_HEADSET_PLUG)){

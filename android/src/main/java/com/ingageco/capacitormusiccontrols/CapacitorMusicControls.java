@@ -201,10 +201,10 @@ public class CapacitorMusicControls extends Plugin {
 		this.notification.destroy();
 		this.mMessageReceiver.stopListening();
 		this.unregisterMediaButtonEvent();
-		if (mConnection != null) {
+		if (this.mConnection != null) {
 			final Activity activity = getActivity();
 			Intent stopServiceIntent = new Intent(activity, CMCNotifyKiller.class);
-			activity.unbindService(mConnection);
+			activity.unbindService(this.mConnection);
 			activity.stopService(stopServiceIntent);
 		}
 		call.success();
@@ -213,22 +213,24 @@ public class CapacitorMusicControls extends Plugin {
 
 	public void controlsNotification(JSObject ret){
 
-        notifyListeners("controlsNotification", ret);
+		Log.i(TAG, "controlsNotification fired "  + ret.getString("message"));
+
+		notifyListeners("controlsNotification", ret);
 
     }
 
 
 	private void registerBroadcaster(MusicControlsBroadcastReceiver mMessageReceiver){
 		final Context context = getActivity().getApplicationContext();
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-previous"));
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-pause"));
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-play"));
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-next"));
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-media-button"));
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter("music-controls-destroy"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-previous"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-pause"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-play"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-next"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-media-button"));
+		context.registerReceiver(mMessageReceiver, new IntentFilter("music-controls-destroy"));
 
 		// Listen for headset plug/unplug
-		context.registerReceiver((BroadcastReceiver)mMessageReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
+		context.registerReceiver(mMessageReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
 	}
 
 	// Register pendingIntent for broacast
@@ -302,9 +304,13 @@ public class CapacitorMusicControls extends Plugin {
 			public void onServiceDisconnected(ComponentName className) {
 			}
 		};
+
+
 		Intent startServiceIntent = new Intent(activity,CMCNotifyKiller.class);
 		startServiceIntent.putExtra("notificationID",this.notificationID);
 		activity.bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+		this.mConnection = mConnection;
 	}
 
 
@@ -354,7 +360,7 @@ public class CapacitorMusicControls extends Plugin {
 			return myBitmap;
 		} catch (Exception ex) {
 			try {
-				InputStream fileStream = cordovaActivity.getAssets().open("www/" + localURL);
+				InputStream fileStream = getActivity().getAssets().open("public/" + localURL);
 				BufferedInputStream buf = new BufferedInputStream(fileStream);
 				Bitmap myBitmap = BitmapFactory.decodeStream(buf);
 				buf.close();
