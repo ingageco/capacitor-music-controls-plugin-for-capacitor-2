@@ -53,38 +53,60 @@ public class CapacitorMusicControls: CAPPlugin {
             var nowPlayingInfo = [String: Any]()
         
    
+            NSLog("%@", "**** Value received for: artwork \(self.musicControlsInfo.cover)")
 
         
-           // let mediaItemArtwork = self.createCoverArtwork(coverUri: self.musicControlsInfo.cover!);
+            let mediaItemArtwork = self.createCoverArtwork(coverUri: self.musicControlsInfo.cover!);
             let duration = self.musicControlsInfo.duration;
             let elapsed = self.musicControlsInfo.elapsed;
             let playbackRate = self.musicControlsInfo.isPlaying;
             
  
  
-//            if(mediaItemArtwork != nil){
-//                nowPlayingInfo?[MPMediaItemPropertyArtwork] = mediaItemArtwork;
-//            }
+
             
 //            nowPlayingInfo[MPMediaItemPropertyArtist] = "Hello world";
 //            nowPlayingInfo[MPMediaItemPropertyTitle] = "Track Name";
 //            nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = "The Gate Church";
-//            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration;
-//            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed;
-//            nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = playbackRate;
+
+        
+        
+            let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+ 
+                NSLog("%@", "**** Set track metadata: title \(self.musicControlsInfo.track)")
+
+
+                nowPlayingInfo[MPMediaItemPropertyTitle] = self.musicControlsInfo.track
+                nowPlayingInfo[MPMediaItemPropertyArtist] = self.musicControlsInfo.artist
+                // nowPlayingInfo[MPMediaItemPropertyArtwork] = metadata.artwork
+                nowPlayingInfo[MPMediaItemPropertyAlbumArtist] = self.musicControlsInfo.artist
+                nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = self.musicControlsInfo.album
+
+                nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
+                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+                nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = playbackRate
+        
+                if(mediaItemArtwork != nil){
+                    nowPlayingInfo[MPMediaItemPropertyArtwork] = mediaItemArtwork
+                }
+
+                nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
+
+        
+        
             
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = [
-                MPMediaItemPropertyArtist: self.musicControlsInfo.artist,
-                MPMediaItemPropertyTitle:self.musicControlsInfo.track,
-                MPMediaItemPropertyAlbumTitle:self.musicControlsInfo.album,
-                MPMediaItemPropertyPlaybackDuration:duration,
-                MPNowPlayingInfoPropertyElapsedPlaybackTime:elapsed,
-                MPNowPlayingInfoPropertyPlaybackRate:playbackRate
-            ]
+//            MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+//                MPMediaItemPropertyArtist: self.musicControlsInfo.artist,
+//                MPMediaItemPropertyTitle:self.musicControlsInfo.track,
+//                MPMediaItemPropertyAlbumTitle:self.musicControlsInfo.album,
+//                MPMediaItemPropertyPlaybackDuration:duration,
+//                MPNowPlayingInfoPropertyElapsedPlaybackTime:elapsed,
+//                MPNowPlayingInfoPropertyPlaybackRate:playbackRate
+//            ]
             
             
-             MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-            print("Now playing local: \(nowPlayingInfo)")
+            //  MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+            // print("Now playing local: \(nowPlayingInfo)")
 
             print("Now playing lock screen: \(MPNowPlayingInfoCenter.default().nowPlayingInfo)")
 //
@@ -155,57 +177,81 @@ public class CapacitorMusicControls: CAPPlugin {
     }
     
     
-    func createCoverArtwork(coverUri : String) -> MPMediaItemArtwork? {
+    func createCoverArtwork(coverUri : String?) -> MPMediaItemArtwork? {
         
-        var coverImage: UIImage?;
-        
-        if (coverUri.hasPrefix("http://") || coverUri.hasPrefix("https://")) {
-            print("Cover item is a URL");
-
-            let coverImageUrl = URL(string: coverUri)!;
+        if coverUri != nil {
+          
             
-            do{
+            var coverImage: UIImage?;
+            
+            if (coverUri!.hasPrefix("http://") || coverUri!.hasPrefix("https://")) {
+                print("Cover item is a URL");
 
-                let coverImageData = try Data(contentsOf: coverImageUrl);
-                coverImage = UIImage(data:coverImageData)!;
- 
-            } catch {
-                print("Could not make image");
+                let coverImageUrl = URL(string: coverUri!)!;
+                
+                do{
+
+                    let coverImageData = try Data(contentsOf: coverImageUrl);
+                    coverImage = UIImage(data:coverImageData)!;
+     
+                } catch {
+                    print("Could not make image");
+                }
             }
-        }
-        else if (coverUri.hasPrefix("file://")) {
+            else if (coverUri!.hasPrefix("file://")) {
 
-            
-            let fullCoverImagePath = coverUri.replacingOccurrences(of: "file://", with: "");
-            
-            let defaultManager = FileManager.default;
-            
-            if(defaultManager.fileExists(atPath: fullCoverImagePath)){
-                coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
+                
+                let fullCoverImagePath = coverUri!.replacingOccurrences(of: "file://", with: "");
+                
+                let defaultManager = FileManager.default;
+                
+                if(defaultManager.fileExists(atPath: fullCoverImagePath)){
+                    coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
+                }
+     
             }
- 
-        }
-        else if (coverUri != "") {
-            
-            let baseCoverImagePath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
-            let fullCoverImagePath = String(format:"%@%@", baseCoverImagePath, coverUri);
-            
-            let defaultManager = FileManager.default;
-            
-            if(defaultManager.fileExists(atPath: fullCoverImagePath)){
-                coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
-            }
+            else if (coverUri != "") {
+                
+                
+     
+                let filePath = Bundle.main.resourcePath;
 
-        }
-        else {
-            coverImage = UIImage(named: "none")!;
-        }
-        
-        if(self.isCoverImageValid(inputImage: coverImage!)){
-            // return MPMediaItemArtwork.image(coverImage);
-            return MPMediaItemArtwork.init(boundsSize: coverImage!.size, requestHandler: { (size) -> UIImage in
-                    return coverImage!
-            })
+                
+     
+               //  let baseCoverImagePath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
+                let fullCoverImagePath = String(format:"%@%@", filePath!, coverUri!);
+                
+                let defaultManager = FileManager.default;
+
+                if(defaultManager.fileExists(atPath: fullCoverImagePath)){
+                    coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
+                } else {
+                    print("Image could not be found");
+                    print(fullCoverImagePath);
+
+                }
+
+            }
+            else {
+                coverImage = UIImage(named: "none")!;
+            }
+            
+            if coverImage != nil {
+                
+                if(self.isCoverImageValid(inputImage: coverImage!)){
+                         // return MPMediaItemArtwork.image(coverImage);
+                         return MPMediaItemArtwork.init(boundsSize: coverImage!.size, requestHandler: { (size) -> UIImage in
+                                 return coverImage!
+                         })
+                     } else {
+                         return nil;
+                     }
+                
+            } else {
+                return nil;
+            }
+            
+            
         } else {
             return nil;
         }
@@ -214,9 +260,9 @@ public class CapacitorMusicControls: CAPPlugin {
         
     }
     
-    func isCoverImageValid(inputImage: UIImage) -> Bool {
+    func isCoverImageValid(inputImage: UIImage?) -> Bool {
         
-        let cii = CIImage(image: inputImage);
+        let cii = CIImage(image: inputImage!);
         // let cgi = self.convertCIImageToCGImage(inputImage: cii!);
         
         return inputImage != nil && cii != nil;
