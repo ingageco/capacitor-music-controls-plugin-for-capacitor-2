@@ -27,104 +27,52 @@ extension DispatchQueue {
 public class CapacitorMusicControls: CAPPlugin {
     
     var musicControlsInfo: CapacitorMusicControlsInfo!;
-    var latestEventCallbackId: Any?;
+    var eventListnerActive = false;
  
     @objc func create(_ call: CAPPluginCall) {
         let options: Dictionary = call.options;
+
+        self.musicControlsInfo = CapacitorMusicControlsInfo(dictionary: options as NSDictionary);
         
         
         print("MusicControlsOptions:")
         for optionLine in options {
           print(optionLine)
         }
-        
-        
-        
-        self.musicControlsInfo = CapacitorMusicControlsInfo(dictionary: options as NSDictionary);
-      
-        print("initial npi:")
-       print(self.musicControlsInfo)
- 
-        self.registerMusicControlsEventListener();
 
-        // DispatchQueue.background(delay: 5.0, background: {
-        
- 
-            var nowPlayingInfo = [String: Any]()
-        
-   
-            NSLog("%@", "**** Value received for: artwork \(self.musicControlsInfo.cover)")
+        if(!self.eventListnerActive){
+            self.registerMusicControlsEventListener();
+        }
 
+        var nowPlayingInfo = [String: Any]()
+    
+        let duration = self.musicControlsInfo.duration;
+        let elapsed = self.musicControlsInfo.elapsed;
+        let playbackRate = self.musicControlsInfo.isPlaying;
+
+        let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default();
+
+        nowPlayingInfo = [
+            MPMediaItemPropertyArtist: self.musicControlsInfo.artist,
+            MPMediaItemPropertyTitle:self.musicControlsInfo.track,
+            MPMediaItemPropertyAlbumTitle:self.musicControlsInfo.album,
+            MPMediaItemPropertyPlaybackDuration:duration,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime:elapsed,
+            MPNowPlayingInfoPropertyPlaybackRate:playbackRate
+        ]
         
+
+        if(self.musicControlsInfo.cover != nil){
+
             let mediaItemArtwork = self.createCoverArtwork(coverUri: self.musicControlsInfo.cover!);
-            let duration = self.musicControlsInfo.duration;
-            let elapsed = self.musicControlsInfo.elapsed;
-            let playbackRate = self.musicControlsInfo.isPlaying;
+            if(mediaItemArtwork != nil){
+                nowPlayingInfo[MPMediaItemPropertyArtwork] = mediaItemArtwork;
+            }
+        }
             
- 
- 
+        nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
 
-            
-//            nowPlayingInfo[MPMediaItemPropertyArtist] = "Hello world";
-//            nowPlayingInfo[MPMediaItemPropertyTitle] = "Track Name";
-//            nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = "The Gate Church";
-
-        
-        
-            let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
- 
-                NSLog("%@", "**** Set track metadata: title \(self.musicControlsInfo.track)")
-
-
-                nowPlayingInfo[MPMediaItemPropertyTitle] = self.musicControlsInfo.track
-                nowPlayingInfo[MPMediaItemPropertyArtist] = self.musicControlsInfo.artist
-                // nowPlayingInfo[MPMediaItemPropertyArtwork] = metadata.artwork
-                nowPlayingInfo[MPMediaItemPropertyAlbumArtist] = self.musicControlsInfo.artist
-                nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = self.musicControlsInfo.album
-
-                nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
-                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
-                nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = playbackRate
-        
-                if(mediaItemArtwork != nil){
-                    nowPlayingInfo[MPMediaItemPropertyArtwork] = mediaItemArtwork
-                }
-
-                nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
-
-        
-        
-            
-//            MPNowPlayingInfoCenter.default().nowPlayingInfo = [
-//                MPMediaItemPropertyArtist: self.musicControlsInfo.artist,
-//                MPMediaItemPropertyTitle:self.musicControlsInfo.track,
-//                MPMediaItemPropertyAlbumTitle:self.musicControlsInfo.album,
-//                MPMediaItemPropertyPlaybackDuration:duration,
-//                MPNowPlayingInfoPropertyElapsedPlaybackTime:elapsed,
-//                MPNowPlayingInfoPropertyPlaybackRate:playbackRate
-//            ]
-            
-            
-            //  MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-            // print("Now playing local: \(nowPlayingInfo)")
-
-            print("Now playing lock screen: \(MPNowPlayingInfoCenter.default().nowPlayingInfo)")
-//
-//        }, completion:{
-//            // when background job finished, do something in main thread
-//
-//
-//        })
-        
-        
-
-        
-        
-
-        
-        
-        
-       call.success();
+        call.success();
         
     }
     
@@ -132,11 +80,6 @@ public class CapacitorMusicControls: CAPPlugin {
     @objc func updateIsPlaying(_ call: CAPPluginCall) {
         
         let options: Dictionary = call.options;
- 
-        print("MusicControlsOptions:")
-        for optionLine in options {
-          print(optionLine)
-        }
         
         musicControlsInfo = CapacitorMusicControlsInfo(dictionary: options as NSDictionary);
         
@@ -158,11 +101,18 @@ public class CapacitorMusicControls: CAPPlugin {
     }
     
     @objc func updateElapsed(_ call: CAPPluginCall) {
-       
-        self.updateIsPlaying(call);
         
-           
-    }
+         self.updateIsPlaying(call);
+         
+     }
+    
+    
+    @objc func listen(_ call: CAPPluginCall) {
+            self.registerMusicControlsEventListener();
+            
+            call.success();
+   }
+       
     
     @objc func destroy(_ call: CAPPluginCall) {
         self.deregisterMusicControlsEventListener();
@@ -170,368 +120,210 @@ public class CapacitorMusicControls: CAPPlugin {
         call.success();
            
     }
+ 
     
-    @objc func watch(_ call: CAPPluginCall) {
-
-        self.latestEventCallbackId = call.callbackId;
-    }
-    
-    
-    func createCoverArtwork(coverUri : String?) -> MPMediaItemArtwork? {
+    func createCoverArtwork(coverUri : String) -> MPMediaItemArtwork? {
         
-        if coverUri != nil {
-          
+        var coverImage: UIImage?;
+        
+        if (coverUri.hasPrefix("http://") || coverUri.hasPrefix("https://")) {
+            //print("Cover item is a URL");
+
+            let coverImageUrl = URL(string: coverUri)!;
             
-            var coverImage: UIImage?;
+            do{
+
+                let coverImageData = try Data(contentsOf: coverImageUrl);
+                coverImage = UIImage(data:coverImageData)!;
+ 
+            } catch {
+               // print("Could not make image");
+                coverImage = nil;
+            }
+        }
+        else if (coverUri.hasPrefix("file://")) {
+            //print("coverImage file://");
+
             
-            if (coverUri!.hasPrefix("http://") || coverUri!.hasPrefix("https://")) {
-                print("Cover item is a URL");
-
-                let coverImageUrl = URL(string: coverUri!)!;
-                
-                do{
-
-                    let coverImageData = try Data(contentsOf: coverImageUrl);
-                    coverImage = UIImage(data:coverImageData)!;
-     
-                } catch {
-                    print("Could not make image");
-                }
-            }
-            else if (coverUri!.hasPrefix("file://")) {
-
-                
-                let fullCoverImagePath = coverUri!.replacingOccurrences(of: "file://", with: "");
-                
-                let defaultManager = FileManager.default;
-                
-                if(defaultManager.fileExists(atPath: fullCoverImagePath)){
-                    coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
-                }
-     
-            }
-            else if (coverUri != "") {
-                
-                
-     
-                let filePath = Bundle.main.resourcePath;
-
-                
-     
-               //  let baseCoverImagePath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
-                let fullCoverImagePath = String(format:"%@%@", filePath!, coverUri!);
-                
-                let defaultManager = FileManager.default;
-
-                if(defaultManager.fileExists(atPath: fullCoverImagePath)){
-                    coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
-                } else {
-                    print("Image could not be found");
-                    print(fullCoverImagePath);
-
-                }
-
-            }
-            else {
-                coverImage = UIImage(named: "none")!;
-            }
+            let fullCoverImagePath = coverUri.replacingOccurrences(of: "file://", with: "");
             
-            if coverImage != nil {
-                
-                if(self.isCoverImageValid(inputImage: coverImage!)){
-                         // return MPMediaItemArtwork.image(coverImage);
-                         return MPMediaItemArtwork.init(boundsSize: coverImage!.size, requestHandler: { (size) -> UIImage in
-                                 return coverImage!
-                         })
-                     } else {
-                         return nil;
-                     }
-                
+            let defaultManager = FileManager.default;
+            
+            if(defaultManager.fileExists(atPath: fullCoverImagePath)){
+                coverImage = UIImage(contentsOfFile: fullCoverImagePath)!
             } else {
-                return nil;
+                coverImage = nil;
+
+               // print("unable to find coverImage");
             }
+ 
+        }
+        else if (coverUri != "") {
+           //  print("coverImage empty");
+
+//            let baseCoverImagePath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
+//            let fullCoverImagePath = String(format:"%@%@", baseCoverImagePath, coverUri);
+//
+            let defaultManager = FileManager.default;
             
+            let coverFilePath = "public/" + coverUri;
             
+            let urlPath = Bundle.main.path(forResource: coverFilePath, ofType: "");
+
+ 
+            if(urlPath != nil && defaultManager.fileExists(atPath: urlPath!)){
+                coverImage = UIImage(contentsOfFile: urlPath!)!
+            } else {
+                coverImage = nil;
+            }
+
+        }
+        else {
+            coverImage = nil;
+        }
+        
+        if(coverImage != nil && self.isCoverImageValid(inputImage: coverImage!)){
+
+            return MPMediaItemArtwork.init(boundsSize: coverImage!.size, requestHandler: { (size) -> UIImage in
+                    return coverImage!
+            })
         } else {
             return nil;
         }
-        
-       //  return [self isCoverImageValid:coverImage] ? [[MPMediaItemArtwork alloc] initWithImage:coverImage] : nil;
-        
+                
     }
     
-    func isCoverImageValid(inputImage: UIImage?) -> Bool {
+    func isCoverImageValid(inputImage: UIImage) -> Bool {
         
-        let cii = CIImage(image: inputImage!);
-        // let cgi = self.convertCIImageToCGImage(inputImage: cii!);
+        let cii = CIImage(image: inputImage);
         
         return inputImage != nil && cii != nil;
 
     }
     
-//    func convertCIImageToCGImage(inputImage: CIImage) -> CGImage! {
-//        let context = CIContext(options: nil)
-//        if context != nil {
-//            return context.createCGImage(inputImage, fromRect: inputImage.extent())
-//        }
-//        return nil
-//    }
-    
     @objc func changedThumbSliderOnLockScreen(_ event: MPChangePlaybackPositionCommandEvent) -> MPRemoteCommandHandlerStatus {
-        print("changePlaybackPositionCommand");
-
         self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-to", "position" : event.positionTime ])
-
-        
         return .success;
     }
     
-    @objc func skipForwardEvent(_ event: MPSkipIntervalCommandEvent){
+    @objc func skipForwardEvent(_ event: MPSkipIntervalCommandEvent) -> MPRemoteCommandHandlerStatus{
         self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-forward" ])
-
-        
+        return .success;
     }
     
-    @objc func skipBackwardEvent(_ event: MPSkipIntervalCommandEvent){
+    @objc func skipBackwardEvent(_ event: MPSkipIntervalCommandEvent) -> MPRemoteCommandHandlerStatus{
         self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-backward" ])
+        return .success;
 
-    }
-    
-    @objc func remoteEvent(_ event: MPRemoteCommandEvent){
-        return;
     }
     
     @objc func nextTrackEvent(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-        print("hello from nextTrackEvent");
-           self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-next" ])
+        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-next" ])
         return .success;
-
-       }
+    }
     
-    @objc func prevTrackEvent(_ event: MPRemoteCommandEvent){
-           self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-previous" ])
-
+    @objc func prevTrackEvent(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-previous" ])
+        return .success;
     }
     
     @objc func pauseEvent(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-           self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-pause" ])
-        return .success
-
+        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-pause" ])
+        return .success;
     }
     
    @objc func playEvent(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-       self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-play" ])
-        return .success
-
+        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-play" ])
+        return .success;
     }
     
-    @objc func handleMusicControlsNotification(_ notification: NSNotification){
-        
-        
-        let receivedEvent: UIEvent = notification.object as! UIEvent;
-        
-        if (self.latestEventCallbackId == nil) {
-            return;
-        }
-        
-        if (receivedEvent.type == .remoteControl) {
- 
-            var action:String?;
-            
-            print("receivedEvent:");
-            print(receivedEvent.subtype);
-            
-            switch (receivedEvent.subtype) {
-                case .remoteControlTogglePlayPause:
-                    action = "music-controls-toggle-play-pause";
-                    break;
-                    
-                case .remoteControlPlay:
-                    action = "music-controls-play";
-                    break;
-                    
-                case .remoteControlPause:
-                    action = "music-controls-pause";
-                    break;
-                    
-            case .remoteControlPreviousTrack:
-                    action = "music-controls-previous";
-                    break;
-                    
-            case .remoteControlNextTrack:
-                    action = "music-controls-next";
-                    break;
-                    
-            case .remoteControlStop:
-                    action = "music-controls-destroy";
-                    break;
-                    
-                default:
-                    action = nil;
-                    break;
-            }
-            
-            if(action == nil){
-                return;
-            }
-            
-            // var jsonAction = String(format:"{\"message\":\"%@\"}", action!);
-            
-            // NSString * jsonAction = [NSString stringWithFormat:@"{\"message\":\"%@\"}", action];
-//            CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonAction];
-//            [self.commandDelegate sendPluginResult:pluginResult callbackId:[self latestEventCallbackId]];
-//
-            
-            
-            self.notifyListeners("controlsNotification", data: [ "message" : action ])
-
-
-         
-        }
-        
-    }
     
     func registerMusicControlsEventListener(){
         
-       DispatchQueue.main.async { // Correct
+        self.eventListnerActive = true;
 
+        DispatchQueue.main.async {
             UIApplication.shared.beginReceivingRemoteControlEvents();
-        
-        
         }
-            
-            print("hello from registering");
-
-            NotificationCenter.default.addObserver(self, selector: #selector(self.handleMusicControlsNotification(_:)), name: NSNotification.Name(rawValue: "musicControlsEventNotification"), object: nil)
         
         let commandCenter = MPRemoteCommandCenter.shared();
-
+           
         commandCenter.playCommand.isEnabled = true;
-            // commandCenter.playCommand.addTarget(self, action: #selector(self.playEvent(_:)));
-            commandCenter.playCommand.addTarget { [unowned self] event in
-                     
-                print("playCommand");
-                self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-play" ])
-
-                      return .success
-                 
-              }
-            
-            
+        commandCenter.playCommand.addTarget(self, action: #selector(CapacitorMusicControls.playEvent(_:)));
         commandCenter.pauseCommand.isEnabled = true;
-       //     commandCenter.playCommand.addTarget(self, action: #selector(self.pauseEvent(_:)));
-            commandCenter.pauseCommand.addTarget { [unowned self] event in
-                   
-                print("pauseCommand");
-
-                self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-pause" ])
-
-                    return .success
-               
-            }
-            
-            print("integrity");
-            print(self.musicControlsInfo.hasNext);
-           if(self.musicControlsInfo.hasNext!){
-                commandCenter.nextTrackCommand.isEnabled = true;
-               commandCenter.nextTrackCommand.addTarget(self, action: #selector(CapacitorMusicControls.nextTrackEvent(_:)));
-            }
-//
-            if(self.musicControlsInfo.hasPrev!){
-            commandCenter.previousTrackCommand.isEnabled = true;
-//                commandCenter.previousTrackCommand.addTarget(self, action: #selector(self.prevTrackEvent(_:)));
-
-            commandCenter.previousTrackCommand.addTarget { [unowned self] event in
-
-                           print("previousTrackCommand");
-
-                           self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-previous" ])
-
-                               return .success
-
-                       }
-            }
-//
-         if(floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_9_0){
-
-            if(self.musicControlsInfo.hasSkipForward!){
-                commandCenter.skipForwardCommand.preferredIntervals = [self.musicControlsInfo.skipForwardInterval!];
-                commandCenter.skipForwardCommand.isEnabled = true;
-               // commandCenter.skipForwardCommand.addTarget(self, action: #selector(self.skipForwardEvent(_:)));
-                commandCenter.skipForwardCommand.addTarget { [unowned self] event in
-
-                      print("skipForwardCommand");
-
-                      self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-forward" ])
-
-                          return .success
-
-                  }
-            }
-            if(self.musicControlsInfo.hasSkipBackward!){
-                commandCenter.skipBackwardCommand.preferredIntervals = [self.musicControlsInfo.skipBackwardInterval!];
-                commandCenter.skipBackwardCommand.isEnabled = true;
-               // commandCenter.skipBackwardCommand.addTarget(self, action: #selector(self.skipBackwardEvent(_:)));
-                commandCenter.skipBackwardCommand.addTarget { [unowned self] event in
-
-                     print("skipBackwardCommand");
-
-                     self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-backward" ])
-
-                         return .success
-
-                 }
-            }
-//            if(self.musicControlsInfo.hasScrubbing!){
-//                commandCenter.changePlaybackPositionCommand.isEnabled = true;
-//                commandCenter.changePlaybackPositionCommand.addTarget(self, action: #selector(self.changedThumbSliderOnLockScreen(_:)));
-//                commandCenter.changePlaybackPositionCommand.addTarget { [unowned self] event in
-//
-//                    print("changePlaybackPositionCommand");
-//
-//                    self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-to", "position" : event.positionTime ])
-//
-//                        return .success
-//
-//                }
-//            }
-
-        }
- 
-
+        commandCenter.pauseCommand.addTarget(self, action: #selector(CapacitorMusicControls.pauseEvent(_:)));
         
+        if(self.musicControlsInfo.hasNext == true){
+            commandCenter.nextTrackCommand.isEnabled = true;
+            commandCenter.nextTrackCommand.addTarget(self, action: #selector(CapacitorMusicControls.nextTrackEvent(_:)));
+        }
+        
+        if(self.musicControlsInfo.hasPrev == true){
+            commandCenter.previousTrackCommand.isEnabled = true;
+            commandCenter.previousTrackCommand.addTarget(self, action: #selector(CapacitorMusicControls.prevTrackEvent(_:)));
+        }
+        
+        if(self.musicControlsInfo.hasSkipBackward == true){
+            commandCenter.skipBackwardCommand.isEnabled = true;
+            commandCenter.skipBackwardCommand.preferredIntervals = [self.musicControlsInfo.skipBackwardInterval!];
+            commandCenter.skipBackwardCommand.addTarget(self, action: #selector(CapacitorMusicControls.skipBackwardEvent(_:)));
+        }
+        
+        if(self.musicControlsInfo.hasSkipForward == true){
+            commandCenter.skipForwardCommand.isEnabled = true;
+            commandCenter.skipForwardCommand.preferredIntervals = [self.musicControlsInfo.skipForwardInterval!];
+            commandCenter.skipForwardCommand.addTarget(self, action: #selector(CapacitorMusicControls.skipForwardEvent(_:)));
+        }
+        
+        if(self.musicControlsInfo.hasScrubbing == true){
+            commandCenter.changePlaybackPositionCommand.isEnabled = true;
+            commandCenter.changePlaybackPositionCommand.addTarget(self, action: #selector(CapacitorMusicControls.changedThumbSliderOnLockScreen(_:)));
+        }
     }
     
     func deregisterMusicControlsEventListener(){
         
+        self.eventListnerActive = false;
+        
         DispatchQueue.main.async { // Correct
-
-        
             UIApplication.shared.endReceivingRemoteControlEvents();
-        
- }
-
-            NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "receivedEvent"), object: nil)
-
+        }
             
-          
-            let commandCenter = MPRemoteCommandCenter.shared();
-            
+         let commandCenter = MPRemoteCommandCenter.shared();
+
+        commandCenter.playCommand.isEnabled = false;
+        commandCenter.playCommand.removeTarget(self);
+        commandCenter.pauseCommand.isEnabled = false;
+        commandCenter.pauseCommand.removeTarget(self);
+
+        if(commandCenter.nextTrackCommand.isEnabled){
+
+            commandCenter.nextTrackCommand.isEnabled = false;
             commandCenter.nextTrackCommand.removeTarget(self);
+
+        }
+
+        if(commandCenter.previousTrackCommand.isEnabled){
+
+            commandCenter.previousTrackCommand.isEnabled = false;
             commandCenter.previousTrackCommand.removeTarget(self);
 
-
-            
-            if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_9_0) {
-                commandCenter.changePlaybackPositionCommand.isEnabled = false;
-                commandCenter.changePlaybackPositionCommand.removeTarget(self);
-                commandCenter.skipForwardCommand.removeTarget(self);
-                commandCenter.skipBackwardCommand.removeTarget(self);
-            }
-            
-            self.latestEventCallbackId = nil;
-            
-
+        }
+        
+        if(commandCenter.changePlaybackPositionCommand.isEnabled){
+            commandCenter.changePlaybackPositionCommand.isEnabled = false;
+            commandCenter.changePlaybackPositionCommand.removeTarget(self);
+        }
+        
+        if(commandCenter.skipBackwardCommand.isEnabled){
+            commandCenter.skipBackwardCommand.isEnabled = false;
+            commandCenter.skipBackwardCommand.removeTarget(self);
+        }
+        
+        if(commandCenter.skipForwardCommand.isEnabled){
+            commandCenter.skipForwardCommand.isEnabled = false;
+            commandCenter.skipForwardCommand.removeTarget(self);
+        }
         
     }
     

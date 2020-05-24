@@ -56,7 +56,6 @@ public class CapacitorMusicControls extends Plugin {
 	private boolean mediaButtonAccess=true;
 	private ServiceConnection mConnection;
 
-	private Activity cordovaActivity;
 
 	private MediaSessionCallback mMediaSessionCallback;
 
@@ -71,7 +70,7 @@ public class CapacitorMusicControls extends Plugin {
 		final Context context=getActivity().getApplicationContext();
 		final Activity activity = getActivity();
 
-        this.initialize();
+        initialize();
 
 
 		try{
@@ -114,6 +113,105 @@ public class CapacitorMusicControls extends Plugin {
 
 
     }
+
+
+
+	public void initialize() {
+
+		final Activity activity=getActivity();
+
+		final Context context=activity.getApplicationContext();
+
+		notification = new MusicControlsNotification(activity, notificationID);
+
+
+		final MusicControlsNotification my_notification = notification;
+
+
+		mMessageReceiver = new MusicControlsBroadcastReceiver(this);
+		registerBroadcaster(mMessageReceiver);
+
+
+		mediaSessionCompat = new MediaSessionCompat(context, "capacitor-music-controls-media-session", null, mediaButtonPendingIntent);
+		mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+
+		setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+		mediaSessionCompat.setActive(true);
+
+		mMediaSessionCallback = new MediaSessionCallback(this);
+
+		mediaSessionCompat.setCallback(mMediaSessionCallback);
+
+		// Register media (headset) button event receiver
+		try {
+			mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
+			Intent headsetIntent = new Intent("music-controls-media-button");
+			mediaButtonPendingIntent = PendingIntent.getBroadcast(context, 0, headsetIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			registerMediaButtonEvent();
+		} catch (Exception e) {
+			mediaButtonAccess=false;
+			e.printStackTrace();
+		}
+
+
+		// Notification Killer
+		ServiceConnection newMConnection = new ServiceConnection() {
+			public void onServiceConnected(ComponentName className, IBinder binder) {
+				Log.i(TAG, "onServiceConnected");
+				final CMCNotifyKiller service = (CMCNotifyKiller) ((KillBinder) binder).service;
+				my_notification.setKillerService(service);
+				service.startService(new Intent(activity, CMCNotifyKiller.class));
+				Log.i(TAG, "service Started");
+			}
+			public void onServiceDisconnected(ComponentName className) {
+				Log.i(TAG, "service Disconnected");
+			}
+		};
+
+
+		Intent startServiceIntent = new Intent(activity,CMCNotifyKiller.class);
+		startServiceIntent.putExtra("notificationID", notificationID);
+		activity.bindService(startServiceIntent, newMConnection, Context.BIND_AUTO_CREATE);
+
+		mConnection = newMConnection;
+	}
+
+
+
+	@PluginMethod()
+	public void destroy(PluginCall call) {
+
+		final Activity activity = getActivity();
+		final Context context=activity.getApplicationContext();
+
+		notification.destroy();
+		// mMessageReceiver.stopListening();
+
+		try{
+
+			context.unregisterReceiver(mMessageReceiver);
+
+		} catch(IllegalArgumentException e) {
+
+			e.printStackTrace();
+
+		}
+
+		unregisterMediaButtonEvent();
+
+		if (mConnection != null) {
+			Intent stopServiceIntent = new Intent(activity, CMCNotifyKiller.class);
+			activity.unbindService(mConnection);
+			activity.stopService(stopServiceIntent);
+			mConnection = null;
+		}
+		call.success();
+	}
+
+
+
+
 
 	@PluginMethod()
 	public void updateIsPlaying(PluginCall call) {
@@ -177,38 +275,7 @@ public class CapacitorMusicControls extends Plugin {
 
 	}
 
-	@PluginMethod()
-	public void updateIsPlayingDismissable(PluginCall call) {
-		JSObject params = call.getData();
 
-		try{
-
-			final boolean dismissable_2 = params.getBoolean("dismissable");
-			final boolean isPlaying_2 = params.getBoolean("isPlaying");
-			this.notification.updateIsPlayingDismissable(isPlaying_2, dismissable_2);
-			call.success();
-		} catch(JSONException e){
-			call.reject("error in updateIsPlayingDismissable");
-		}
-
-
-	}
-
-
-
-	@PluginMethod()
-	public void destroy(PluginCall call) {
-		this.notification.destroy();
-		this.mMessageReceiver.stopListening();
-		this.unregisterMediaButtonEvent();
-		if (this.mConnection != null) {
-			final Activity activity = getActivity();
-			Intent stopServiceIntent = new Intent(activity, CMCNotifyKiller.class);
-			activity.unbindService(this.mConnection);
-			activity.stopService(stopServiceIntent);
-		}
-		call.success();
-	}
 
 
 	public void controlsNotification(JSObject ret){
@@ -238,81 +305,15 @@ public class CapacitorMusicControls extends Plugin {
 
 		this.mediaSessionCompat.setMediaButtonReceiver(this.mediaButtonPendingIntent);
 
-		/*if (this.mediaButtonAccess && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2){
-		this.mAudioManager.registerMediaButtonEventReceiver(this.mediaButtonPendingIntent);
-		}*/
 	}
 
 	public void unregisterMediaButtonEvent(){
 		this.mediaSessionCompat.setMediaButtonReceiver(null);
-		/*if (this.mediaButtonAccess && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2){
-		this.mAudioManager.unregisterMediaButtonEventReceiver(this.mediaButtonPendingIntent);
-		}*/
 	}
 
 	public void destroyPlayerNotification(){
 		this.notification.destroy();
 	}
-
-	public void initialize() {
-
-		this.cordovaActivity = getActivity();
-
-        final Activity activity=getActivity();
-
-        final Context context=getActivity().getApplicationContext();
-
-		this.notification = new MusicControlsNotification(activity,this.notificationID);
-		final MusicControlsNotification my_notification = this.notification;
-		this.mMessageReceiver = new MusicControlsBroadcastReceiver(this);
-		this.registerBroadcaster(mMessageReceiver);
-
-
-		this.mediaSessionCompat = new MediaSessionCompat(context, "cordova-music-controls-media-session", null, this.mediaButtonPendingIntent);
-		this.mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
-
-		setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
-		this.mediaSessionCompat.setActive(true);
-
-		this.mMediaSessionCallback = new MediaSessionCallback(this);
-
-		this.mediaSessionCompat.setCallback(this.mMediaSessionCallback);
-
-		// Register media (headset) button event receiver
-		try {
-			this.mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-			Intent headsetIntent = new Intent("music-controls-media-button");
-			this.mediaButtonPendingIntent = PendingIntent.getBroadcast(context, 0, headsetIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			this.registerMediaButtonEvent();
-		} catch (Exception e) {
-			this.mediaButtonAccess=false;
-			e.printStackTrace();
-		}
-
-		final Activity pa = activity;
-
-		// Notification Killer
-		mConnection = new ServiceConnection() {
-			public void onServiceConnected(ComponentName className, IBinder binder) {
-				Log.i(TAG, "onServiceConnected");
-				final CMCNotifyKiller service = (CMCNotifyKiller) ((KillBinder) binder).service;
-				my_notification.setKillerService(service);
-				service.startService(new Intent(pa, CMCNotifyKiller.class));
-				Log.i(TAG, "service Started");
-			}
-			public void onServiceDisconnected(ComponentName className) {
-			}
-		};
-
-
-		Intent startServiceIntent = new Intent(activity,CMCNotifyKiller.class);
-		startServiceIntent.putExtra("notificationID",this.notificationID);
-		activity.bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-
-		this.mConnection = mConnection;
-	}
-
 
 
 

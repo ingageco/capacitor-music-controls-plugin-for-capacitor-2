@@ -12,8 +12,8 @@ public class CapacitorMusicControlsInfo: NSObject {
     var album: String? = "";
     var ticker: String? = "";
     var cover: String? = nil;
-    var duration: Int? = 0;
-    var elapsed: Int? = 0;
+    var duration: NSNumber? = 0;
+    var elapsed: NSNumber? = 0;
     var isPlaying: Bool? = true;
     var hasPrev: Bool? = true;
     var hasNext: Bool? = true;
@@ -33,8 +33,8 @@ public class CapacitorMusicControlsInfo: NSObject {
         self.album = dictionary["album"] as? String;
         self.ticker = dictionary["ticker"] as? String;
         self.cover = dictionary["cover"] as? String;
-        self.duration = dictionary["duration"] as? Int;
-        self.elapsed = dictionary["elapsed"] as? Int;
+        self.duration = dictionary["duration"] as? NSNumber;
+        self.elapsed = dictionary["elapsed"] as? NSNumber;
         self.isPlaying = dictionary["isPlaying"] as? Bool;
         self.hasPrev = dictionary["hasPrev"] as? Bool;
         self.hasNext = dictionary["hasNext"] as? Bool;

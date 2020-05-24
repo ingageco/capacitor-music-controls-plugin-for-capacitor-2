@@ -8,6 +8,6 @@ CAP_PLUGIN(CapacitorMusicControls, "CapacitorMusicControls",
     CAP_PLUGIN_METHOD(create, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(updateIsPlaying, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(updateElapsed, CAPPluginReturnPromise);
+   // CAP_PLUGIN_METHOD(listen, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(destroy, CAPPluginReturnPromise);
-
 )
