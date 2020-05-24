@@ -57,7 +57,7 @@ const { CapacitorMusicControls } = Plugins;
 
 - Create the media controls:
 ```javascript
-MusicControls.create({
+CapacitorMusicControls.create({
 	track       : 'Time is Running Out',		// optional, default : ''
 	artist      : 'Muse',						// optional, default : ''
 	album       : 'Absolution',     // optional, default: ''
