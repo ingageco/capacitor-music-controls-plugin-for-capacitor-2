@@ -302,17 +302,21 @@ public class CapacitorMusicControls extends Plugin {
 
 	// Register pendingIntent for broacast
 	public void registerMediaButtonEvent(){
-
-		this.mediaSessionCompat.setMediaButtonReceiver(this.mediaButtonPendingIntent);
-
+		if (this.mediaSessionCompat != null) {
+			this.mediaSessionCompat.setMediaButtonReceiver(this.mediaButtonPendingIntent);
+		}
 	}
 
 	public void unregisterMediaButtonEvent(){
-		this.mediaSessionCompat.setMediaButtonReceiver(null);
+		if (this.mediaSessionCompat != null) {
+			this.mediaSessionCompat.setMediaButtonReceiver(null);
+		}
 	}
 
 	public void destroyPlayerNotification(){
-		this.notification.destroy();
+		if (this.notification) {
+			this.notification.destroy();
+		}
 	}
 
 
