@@ -314,7 +314,7 @@ public class CapacitorMusicControls extends Plugin {
 	}
 
 	public void destroyPlayerNotification(){
-		if (this.notification) {
+		if (this.notification != null) {
 			this.notification.destroy();
 		}
 	}
