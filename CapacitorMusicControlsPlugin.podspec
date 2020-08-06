@@ -1,7 +1,7 @@
 
   Pod::Spec.new do |s|
     s.name = 'CapacitorMusicControlsPlugin'
-    s.version = '0.0.1'
+    s.version = '1.0.1'
     s.summary = 'Implementation of MusicControls for Capacitor projects'
     s.license = 'MIT'
     s.homepage = 'https://github.com/ingageco/capacitor-music-controls-plugin'
