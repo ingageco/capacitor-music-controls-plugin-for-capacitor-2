@@ -185,7 +185,7 @@ public class CapacitorMusicControls extends Plugin {
 		final Activity activity = getActivity();
 		final Context context=activity.getApplicationContext();
 
-		if(notification) {
+		if(notification != null) {
 			notification.destroy();
 		}
 		// mMessageReceiver.stopListening();
