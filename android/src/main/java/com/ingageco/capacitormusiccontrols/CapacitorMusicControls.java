@@ -102,10 +102,10 @@ public class CapacitorMusicControls extends Plugin {
 			else
 				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
 
-			call.success();
+			call.resolve();
 
 		}catch(JSONException e){
-			call.reject("error in initializing MusicControlsInfos");
+			call.reject("error in initializing MusicControlsInfos "+e.toString());
 
 		}
 
@@ -185,7 +185,9 @@ public class CapacitorMusicControls extends Plugin {
 		final Activity activity = getActivity();
 		final Context context=activity.getApplicationContext();
 
-		notification.destroy();
+		if(notification) {
+			notification.destroy();
+		}
 		// mMessageReceiver.stopListening();
 
 		try{
@@ -206,7 +208,7 @@ public class CapacitorMusicControls extends Plugin {
 			activity.stopService(stopServiceIntent);
 			mConnection = null;
 		}
-		call.success();
+		call.resolve();
 	}
 
 
@@ -227,7 +229,7 @@ public class CapacitorMusicControls extends Plugin {
 			else
 				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
 
-			call.success();
+			call.resolve();
 		} catch(JSONException e){
 			System.out.println("toString(): "  + e.toString());
 			System.out.println("getMessage(): " + e.getMessage());
@@ -254,7 +256,7 @@ public class CapacitorMusicControls extends Plugin {
 			else
 				setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
 
-			call.success();
+			call.resolve();
 		} catch(JSONException e){
 			call.reject("error in updateElapsed");
 		}
@@ -268,7 +270,7 @@ public class CapacitorMusicControls extends Plugin {
 		try{
 			final boolean dismissable = params.getBoolean("dismissable");
 			this.notification.updateDismissable(dismissable);
-		call.success();
+		call.resolve();
 		} catch(JSONException e){
 			call.reject("error in updateDismissable");
 		}

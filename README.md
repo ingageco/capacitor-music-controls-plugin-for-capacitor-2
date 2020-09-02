@@ -90,7 +90,12 @@ CapacitorMusicControls.create({
 	nextIcon: 'media_next',
 	closeIcon: 'media_close',
 	notificationIcon: 'notification'
-}, onSuccess, onError);
+}).then(()=>{
+	// TODO
+})
+.catch(e=>{
+	console.log(e);
+});
 ```
 
 - Update whether the music is playing true/false, as well as the time elapsed (seconds)
@@ -99,6 +104,11 @@ CapacitorMusicControls.create({
 CapacitorMusicControls.updateIsPlaying({
     isPlaying: true, // affects Android only
     elapsed: timeElapsed // affects iOS Only
+}).then(()=>{
+	// TODO
+})
+.catch(e=>{
+	console.log(e);
 });
 ```
 
