@@ -202,7 +202,7 @@ public class CapacitorMusicControls: CAPPlugin {
     }
     
     @objc func changedThumbSliderOnLockScreen(_ event: MPChangePlaybackPositionCommandEvent) -> MPRemoteCommandHandlerStatus {
-        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-skip-to", "position" : event.positionTime ])
+        self.notifyListeners("controlsNotification", data: [ "message" : "music-controls-seek-to", "position" : event.positionTime ])
         return .success;
     }
     
