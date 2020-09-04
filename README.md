@@ -155,7 +155,7 @@ handleControlsEvent(action){
 		case 'music-controls-toggle-play-pause' :
 			// do something
 			break;
-		case 'music-controls-seek-to':
+		case 'music-controls-skip-to':
 			// do something
 			break;
 		case 'music-controls-skip-forward':
