@@ -160,6 +160,8 @@ public class CapacitorMusicControls extends Plugin {
 			public void onServiceConnected(ComponentName className, IBinder binder) {
 				Log.i(TAG, "onServiceConnected");
 				final CMCNotifyKiller service = (CMCNotifyKiller) ((KillBinder) binder).service;
+
+				service.setActivity(activity).setConnection(this).setBounded(true);
 				my_notification.setKillerService(service);
 				service.startService(new Intent(activity, CMCNotifyKiller.class));
 				Log.i(TAG, "service Started");
