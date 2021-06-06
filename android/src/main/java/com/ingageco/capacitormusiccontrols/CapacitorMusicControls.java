@@ -1,7 +1,7 @@
 package com.ingageco.capacitormusiccontrols;
 
 import com.getcapacitor.JSObject;
-import com.getcapacitor.NativePlugin;
+import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -42,7 +42,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-@NativePlugin()
+@CapacitorPlugin(name = "CapacitorMusicControls")
 public class CapacitorMusicControls extends Plugin {
 
 	private static final String TAG = "CapacitorMusicControls";
