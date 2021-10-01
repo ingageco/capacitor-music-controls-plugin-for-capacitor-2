@@ -187,9 +187,7 @@ public class CapacitorMusicControls extends Plugin {
 		final Activity activity = getActivity();
 		final Context context=activity.getApplicationContext();
 
-		if(notification != null) {
-			notification.destroy();
-		}
+		this.destroyPlayerNotification();
 		// mMessageReceiver.stopListening();
 
 		try{
@@ -319,10 +317,14 @@ public class CapacitorMusicControls extends Plugin {
 
 	public void destroyPlayerNotification(){
 		if (this.notification != null) {
-			this.notification.destroy();
+			try {
+				this.notification.destroy();
+				this.notification = null;
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-
 
 
 	private void setMediaPlaybackState(int state) {
