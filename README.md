@@ -1,6 +1,8 @@
 # Capacitor Music Controls Plugin
 
-An update to Cordova Music Controls plugin to support Capacitor 2 (Capacitor 3 not supported in this repo)
+An update to Cordova Music Controls plugin to support Capacitor 2. A Capacitor 3 version can be found here (thanks to JumBay):
+https://github.com/ingageco/capacitor-music-controls-plugin-v3
+
 
 Music controls for Capacitor applications. Display a 'media' notification with play/pause, previous, next buttons, allowing the user to control the play. Handles headset events (plug, unplug, headset button) on Android.
 
